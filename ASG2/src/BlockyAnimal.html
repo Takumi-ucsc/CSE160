@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>ASG2</title>
+</head>
+
+<body onload="main()">
+    <canvas id="webgl" width="400" height="400">
+        Please use a browser that supports "canvas"
+    </canvas>
+
+    <p>
+        <label id="numdot">
+        </label>
+    <p>
+        <label for="angleX">
+            Camera X Angle
+            <input type="range" min="-180" max="180" value="0" id="angleX">
+        </label>
+    </p>
+    <p>
+        <label for="angleY">
+            Camera Y Angle
+            <input type="range" min="-180" max="180" value="0" id="angleY">
+        </label>
+    </p>
+    <p>
+        <label for="leftWingSlider">
+            Left Wing Angle
+            <input type="range" min="-45" max="45" value="0" id="leftWingSlider">
+        </label>
+    </p>
+    <p>
+        <label for="rightWingSlider">
+            Right Wing Angle
+            <input type="range" min="-45" max="45" value="0" id="rightWingSlider">
+        </label>
+    </p>
+    <p>
+        <label for="leftLegSlider">
+            Left Leg Angle
+            <input type="range" min="-45" max="45" value="0" id="leftLegSlider">
+        </label>
+    </p>
+    <p>
+        <label for="rightLegSlider">
+            Right Leg Angle
+            <input type="range" min="-45" max="45" value="0" id="rightLegSlider">
+        </label>
+    </p>
+    <p>
+        <button id="animate-off">Animation Off</button>
+        <button id="animate-on">Animation On</button>
+    </p>
+
+
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix-cse160.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="Cube.js"></script>
+    <script src="Pattern.js"></script>
+    <script src="BlockyAnimal.js"></script>
+</body>
+
+</html>
