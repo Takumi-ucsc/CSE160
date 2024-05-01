@@ -1,4 +1,4 @@
-# Penguin Animation Project
+# CSE160 Assignment 2
 
 ## Overview
 This project presents an interactive 3D model of a penguin created using basic geometric shapes (cubes and triangles) rendered via WebGL. Users can manipulate the penguin's wings and legs, control camera angles, and activate animations through a web interface.
