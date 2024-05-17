@@ -1,29 +1,26 @@
 class Camera {
     constructor() {
         this.eye = new Vector3([0, 0, -3]);
-        this.at = new Vector3([0, 0, 100]);
+        this.at = new Vector3([0, 0, 0]);
         this.up = new Vector3([0, 1, 0]);
 
         this.viewMat = new Matrix4();
-        // eye
-        this.viewMat.setLookAt(this.eye.elements[0], this.eye.elements[1], this.eye.elements[2],
-        // at
-        this.at.elements[0], this.at.elements[1], this.at.elements[2],
-        // up
-        this.up.elements[0], this.up.elements[1], this.up.elements[2]);
-
         this.projMat = new Matrix4();
-        this.projMat.setPerspective(30, 400 / 400, 0.1, 100);
+        this.projMat.setPerspective(30, 400 / 400, .1, 100);
 
+        this.updateViewMat();
+    }
+
+    updateViewMat() {
+        this.viewMat.setLookAt(
+            this.eye.elements[0], this.eye.elements[1], this.eye.elements[2],
+            this.at.elements[0], this.at.elements[1], this.at.elements[2],
+            this.up.elements[0], this.up.elements[1], this.up.elements[2]
+        );
     }
 
     setViewMat() {
-        // eye
-        this.viewMat.setLookAt(this.eye.elements[0], this.eye.elements[1], this.eye.elements[2],
-        // at
-        this.at.elements[0], this.at.elements[1], this.at.elements[2],
-        // up
-        this.up.elements[0], this.up.elements[1], this.up.elements[2]);
+        this.updateViewMat();
     }
 
     // W key 

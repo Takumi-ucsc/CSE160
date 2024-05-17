@@ -166,7 +166,7 @@ function connectVariablesToGLSL() {
         return false;
     }
 
-    
+
 
     // Set an initial value for the matrix to identity
     var identityM = new Matrix4();
@@ -180,7 +180,7 @@ function main() {
 
     // Register function to be called on a mouse press
     document.onkeydown = keydown;
-    
+
     // Register function to handle mouse clicks
     handleClicks();
 
@@ -203,10 +203,6 @@ function tick() {
 
     // Save the current time
     g_seconds = performance.now() / 1000.0 - g_startTime;
-
-    //updateAnimationAngles();
-
-    // handleClicks();
 
     // Draw everything
     renderEverything();
@@ -319,7 +315,7 @@ function renderPenguin() {
     wingRight.color = [0.05, 0.05, 0.05, 0.8]; // Black
     wingRight.matrix = bodyMat5;
     wingRight.matrix.translate(1, 0.35, 0.3);
-    wingRight.matrix.scale(0.15, 0.65, 0.4);  
+    wingRight.matrix.scale(0.15, 0.65, 0.4);
     wingRight.render();
 
     let wingLeft = new Cube();
@@ -424,13 +420,6 @@ function mouseMove(ev) {
     }
 }
 
-function handleClicks() {
-    // Register functions
-    canvas.onmousedown = mouseDown;
-    canvas.onmousemove = mouseMove;
-    canvas.onmouseup = mouseUp;
-}
-
 // Map
 var g_map = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -469,25 +458,58 @@ var g_map = [
 
 // Render a map
 function renderMap() {
-    for (x = 0; x < 32; x++) {
-        for (y = 0; y < 32; y++) {
-            if (g_map[x][y] == 1) {
+    for (let z = 0; z < 32; z++) {
+        for (let x = 0; x < 32; x++) {
+            if (g_map[z][x] == 1) {
                 var map = new Cube();
                 map.textureNum = -4;
                 map.color = [1, 1, 1, 1];
-                map.matrix.translate(x - 16, -.75, y - 16);
+                map.matrix.translate(x - 16, -.75, z - 16);
                 map.matrix.scale(1, 0.5, 1);
                 map.render();
-            } else if (g_map[x][y] == 2) {
+            } else if (g_map[z][x] == 2) {
                 var map = new Cube();
                 map.textureNum = -5;
                 map.color = [1, 1, 1, 1];
-                map.matrix.translate(x - 16, -.75, y - 16);
-                map.matrix.scale(1.5, 1.5, 1.5);
+                map.matrix.translate(x - 16, -.75, z - 16);
+                map.matrix.scale(1, 1, 1);
                 map.render();
             }
         }
     }
+}
+
+// Camera rotating with mouse
+// Add and Remove block
+function handleClicks() {
+    // Register functions
+    canvas.onmousedown = mouseDown;
+    canvas.onmousemove = mouseMove;
+    canvas.onmouseup = mouseUp;
+
+    // Add block
+    document.getElementById('add').onclick = () => {
+        const x = Math.round(g_Camera.at.elements[0] + 16);
+        const z = Math.round(g_Camera.at.elements[2] + 16);
+        if (z >= 0 && z < g_map.length) {
+            if (x >= 0 && x < g_map[z].length) {
+                g_map[z][x] = 2;
+                renderEverything();
+            }
+        }
+    };
+
+    // Remove block
+    document.getElementById('delete').onclick = () => {
+        const x = Math.round(g_Camera.at.elements[0] + 16);
+        const z = Math.round(g_Camera.at.elements[2] + 16);
+        if (z >= 0 && z < g_map.length) {
+            if (x >= 0 && x < g_map[z].length) {
+                g_map[z][x] = 0;
+                renderEverything();
+            }
+        }
+    };
 }
 
 function renderEverything() {
