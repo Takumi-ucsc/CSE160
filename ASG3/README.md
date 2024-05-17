@@ -21,6 +21,8 @@ This project presents an interactive 3D maze game where a parent penguin must fi
    - Use W, A, S, D keys to navigate through the maze.
    - Use Q and E keys to pan the camera left and right.
    - Click and move mouse to the rotate the camera.
+   - Use the "Add block" button to place a dirt block at the current camera position.
+   - Use the "Remove block" button to remove a block at the current camera position.
 3. **Find the Baby Penguin:**
    - Move close to the baby penguin and press the space key. An alert will notify you that the baby penguin is found and the baby should be disappeared. You can see the distance from you to the baby on console.
 4. **Reunite with the Parent Penguin:**
