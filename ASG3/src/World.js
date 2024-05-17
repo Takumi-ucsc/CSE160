@@ -64,6 +64,9 @@ let u_Sampler2;
 let u_Sampler3;
 let u_whichTexture;
 
+let g_babyPenguinFound = false;
+let g_babyPenguinReunited = false;
+
 function setupWebGL() {
     // Retrieve <canvas> element
     canvas = document.getElementById('webgl');
@@ -475,10 +478,46 @@ function keydown(ev) {
     if (ev.keyCode == 69) {
         g_Camera.panRight(10);
     }
+    // Space key
+    if (ev.keyCode == 32) {
+        if (!g_babyPenguinFound && isNearChildPenguin([-10, -0.25, 0])) {
+            g_babyPenguinFound = true;
+            console.log("Found a baby penguin! Let's take it back to its mom.");
+            alert("Found a baby penguin! Let's take it back to its mom.");
+        } else if (g_babyPenguinFound && !g_babyPenguinReunited && isNearMomPenguin([0, 0, 0])) {
+            g_babyPenguinReunited = true;
+            console.log("Reunited with mom!");
+            alert("Reunited with mom!");
+        } else {
+            console.log("Find a baby penguin!");
+        }
+    }
     renderEverything();
 
     // Debug
     //console.log(ev.keyCode);
+}
+
+function isNearChildPenguin(childPenguinPos) {
+    const cameraPos = [g_Camera.eye.elements[0], g_Camera.eye.elements[1], g_Camera.eye.elements[2]];
+    const distance = Math.sqrt(
+        (childPenguinPos[0] - cameraPos[0]) ** 2 +
+        (childPenguinPos[1] - cameraPos[1]) ** 2 +
+        (childPenguinPos[2] - cameraPos[2]) ** 2
+    );
+    console.log(`Distance to baby penguin: ${distance}`);
+    return distance < 3; // If distance is less than 3, it works.
+}
+
+function isNearMomPenguin(momPenguinPos) {
+    const cameraPos = [g_Camera.eye.elements[0], g_Camera.eye.elements[1], g_Camera.eye.elements[2]];
+    const distance = Math.sqrt(
+        (momPenguinPos[0] - cameraPos[0]) ** 2 +
+        (momPenguinPos[1] - cameraPos[1]) ** 2 +
+        (momPenguinPos[2] - cameraPos[2]) ** 2
+    );
+    console.log(`Distance to mom penguin: ${distance}`);
+    return distance < 5; // If distance is less than 5, it works.
 }
 
 // Mouse event variables
@@ -638,7 +677,9 @@ function renderEverything() {
     // Render
     drawSurrounding();
 
-    renderPenguin();
+    if (!g_babyPenguinFound) {
+        renderPenguin();
+    }
     renderPenguinMom();
     renderMap();
 
