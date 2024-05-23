@@ -55,16 +55,17 @@ const FSHADER_SOURCE = `
     }
 
     vec3 lightVector = u_lightPos - vec3(v_VertPos);
+    // vec3 lightVector = vec3(v_VertPos) - u_lightPos;
     float r = length(lightVector);
     /* Green and Red light */
-    // if (r < 1.0) {
-    //   gl_FragColor = vec4(1,0,0,1);
-    // } else if (r < 2.0) {
-    //   gl_FragColor = vec4(0,1,0,1);
-    // }
+    if (r < 1.0) {
+      gl_FragColor = vec4(1,0,0,1);
+    } else if (r < 2.0) {
+      gl_FragColor = vec4(0,1,0,1);
+    }
 
     /* Light fall off visualization */
-    gl_FragColor = vec4(vec3(gl_FragColor) / (r*r), 1);
+    // gl_FragColor = vec4(vec3(gl_FragColor) / (r*r), 1);
 
     /* N dot L */
     // vec3 L = normalize(lightVector);
@@ -103,6 +104,7 @@ let u_Sampler1;
 let u_Sampler2;
 let u_whichTexture;
 let u_lightPos;
+let g_globalAngle = 0;
 
 function setupWebGL() {
     // Retrieve <canvas> element
@@ -239,6 +241,12 @@ function addActionsForHtmlUI() {
     document.getElementById('lightSlideX').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) { g_lightPos[0] = this.value / 100; renderLight(); } });
     document.getElementById('lightSlideY').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) { g_lightPos[1] = this.value / 100; renderLight(); } });
     document.getElementById('lightSlideZ').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) { g_lightPos[2] = this.value / 100; renderLight(); } });
+
+    // X-axis Angle Slider Event
+    document.getElementById('angle').addEventListener('input', function () {
+        g_globalAngle = -this.value; // Update the global X-axis rotation angle based on the slider input
+    renderEverything(); // Render the scene with the updated angle
+    });
 }
 
 /* main */
@@ -436,7 +444,6 @@ function renderSphere() {
 
 // Camera variables
 var g_Camera = new Camera(canvas);
-let g_globalAngle = 0;
 
 // WASD moving and QE panninga
 function keydown(ev) {
