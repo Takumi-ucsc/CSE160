@@ -32,6 +32,7 @@ const FSHADER_SOURCE = `
   uniform vec3 u_cameraPos;
   varying vec4 v_VertPos;
   uniform bool u_lightOn;
+  uniform vec3 u_lightColor;
   void main() {
     // Use Normal
     if (u_whichTexture == -3) {
@@ -84,7 +85,7 @@ const FSHADER_SOURCE = `
     /* Specular */
     float specular = pow(max(dot(E,R), 0.0), 64.0) * 0.8;
     
-    vec3 diffuse = vec3(1.0, 1.0, 0.9) * vec3(gl_FragColor) * nDotL * 0.7;
+    vec3 diffuse = u_lightColor * vec3(gl_FragColor) * nDotL * 0.7;
     vec3 ambient = vec3(gl_FragColor) * 0.2;
     if (u_lightOn) {
         // Only sphere gets specular
@@ -115,6 +116,7 @@ let u_whichTexture;
 let u_lightPos;
 let u_cameraPos;
 let u_lightOn;
+let u_lightColor;
 let g_globalAngle = 0;
 
 function setupWebGL() {
@@ -222,6 +224,13 @@ function connectVariablesToGLSL() {
         return;
     }
 
+    // Get the storage location of u_lightColor
+    u_lightColor = gl.getUniformLocation(gl.program, 'u_lightColor');
+    if (!u_lightColor) {
+        console.log('Failed to get the storage location of u_lightColor');
+        return;
+    }
+
     // Get the storage location of u_Sampler0
     u_Sampler0 = gl.getUniformLocation(gl.program, 'u_Sampler0');
     if (!u_Sampler0) {
@@ -256,18 +265,29 @@ function addActionsForHtmlUI() {
     document.getElementById('normalOff').onclick = function () { g_normalOn = false; };
 
     // Light On
-    document.getElementById('lightOn').onclick = function() { g_lightOn = true; };
-    document.getElementById('lightOff').onclick = function() { g_lightOn = false; };
+    document.getElementById('lightOn').onclick = function () { g_lightOn = true; };
+    document.getElementById('lightOff').onclick = function () { g_lightOn = false; };
 
     // Light XYZ
     document.getElementById('lightSlideX').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) { g_lightPos[0] = this.value / 100; renderLight(); } });
     document.getElementById('lightSlideY').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) { g_lightPos[1] = this.value / 100; renderLight(); } });
     document.getElementById('lightSlideZ').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) { g_lightPos[2] = this.value / 100; renderLight(); } });
 
+    // Light Color
+    document.getElementById('lightR').addEventListener('input', function () {
+        g_lightColor[0] = this.value / 255;
+    });
+    document.getElementById('lightG').addEventListener('input', function () {
+        g_lightColor[1] = this.value / 255;
+    });
+    document.getElementById('lightB').addEventListener('input', function () {
+        g_lightColor[2] = this.value / 255;
+    });
+
     // X-axis Angle Slider Event
     document.getElementById('angle').addEventListener('input', function () {
         g_globalAngle = -this.value; // Update the global X-axis rotation angle based on the slider input
-    renderEverything(); // Render the scene with the updated angle
+        renderEverything(); // Render the scene with the updated angle
     });
 }
 
@@ -347,6 +367,7 @@ function drawSurrounding() {
 // Light variables
 let g_lightPos = [0, 1, -2];
 let g_lightOn = true;
+let g_lightColor = [1.0, 1.0, 1.0]; // Default light color (white)
 
 function renderLight() {
     var light = new Cube();
@@ -573,10 +594,13 @@ function renderEverything() {
     gl.uniform3f(u_lightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
 
     // Pass the camera position to GLSL
-    gl.uniform3f(u_cameraPos, g_Camera.eye.elements[0], g_Camera.eye.elements[1],  g_Camera.eye.elements[2]);
+    gl.uniform3f(u_cameraPos, g_Camera.eye.elements[0], g_Camera.eye.elements[1], g_Camera.eye.elements[2]);
 
     // Pass the light status
     gl.uniform1i(u_lightOn, g_lightOn);
+
+    // Pass the light color
+    gl.uniform3fv(u_lightColor, g_lightColor);
 
     // Clear canvas
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

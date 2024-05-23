@@ -21,14 +21,8 @@
     <p>
 
         Light:
-        <button type = "button" id="lightOn">ON</button>
-        <button type = "button" id="lightOff">OFF</button>
-    <p>
-        <label for="angle">
-            Camera Angle
-            <input type="range" min="-180" max="180" value="0" id="angle">
-        </label>
-    </p>
+        <button type="button" id="lightOn">ON</button>
+        <button type="button" id="lightOff">OFF</button>
 
     <p>
         Light X <input type="range" min="-250" max="250" value="0" class="slider" id="lightSlideX">
@@ -36,15 +30,32 @@
         Light Z <input type="range" min="-250" max="250" value="-200" class="slider" id="lightSlideZ">
     <p>
 
-        <script src="../lib/webgl-utils.js"></script>
-        <script src="../lib/webgl-debug.js"></script>
-        <script src="../lib/cuon-utils.js"></script>
-        <script src="../lib/cuon-matrix-cse160.js"></script>
-        <script src="Camera.js"></script>
-        <script src="Cube.js"></script>
-        <script src="Sphere.js"></script>
-        <script src="Triangle.js"></script>
-        <script src="asg4.js"></script>
+    <p>
+        Light Color:
+        <label for="lightR">Red</label>
+        <input type="range" min="0" max="255" value="255" class="slider" id="lightR">
+        <label for="lightG">Green</label>
+        <input type="range" min="0" max="255" value="255" class="slider" id="lightG">
+        <label for="lightB">Blue</label>
+        <input type="range" min="0" max="255" value="255" class="slider" id="lightB">
+    </p>
+
+    <p>
+        <label for="angle">
+            Camera Angle
+            <input type="range" min="-180" max="180" value="0" id="angle">
+        </label>
+    </p>
+
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix-cse160.js"></script>
+    <script src="Camera.js"></script>
+    <script src="Cube.js"></script>
+    <script src="Sphere.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="asg4.js"></script>
 </body>
 
 </html>
