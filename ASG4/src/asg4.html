@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>ASG4</title>
+</head>
+
+<body onload="main()">
+    <canvas id="webgl" width="400" height="400">
+        Please use a browser that supports "canvas"
+    </canvas>
+
+    <p>
+        <label id="numdot">
+        </label>
+    <p>
+    <p>
+    <button id="normalOn">Normal On</button>
+    <button id="normalOff">Normal Off</button>
+    <p>
+
+    <p>
+        Light X <input type="range" min="-250" max="250" value="0" class="slider" id="lightSlideX">
+        Light Y <input type="range" min="-250" max="250" value="100" class="slider" id="lightSlideY">
+        Light Z <input type="range" min="-250" max="250" value="-200" class="slider" id="lightSlideZ">
+    <p>  
+
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix-cse160.js"></script>
+    <script src="Camera.js"></script>
+    <script src="Cube.js"></script>
+    <script src="Sphere.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="asg4.js"></script>
+</body>
+
+</html>
