@@ -29,7 +29,9 @@ const FSHADER_SOURCE = `
   uniform sampler2D u_Sampler2;
   uniform int u_whichTexture;
   uniform vec3 u_lightPos;
+  uniform vec3 u_cameraPos;
   varying vec4 v_VertPos;
+  uniform bool u_lightOn;
   void main() {
     // Use Normal
     if (u_whichTexture == -3) {
@@ -55,36 +57,43 @@ const FSHADER_SOURCE = `
     }
 
     vec3 lightVector = u_lightPos - vec3(v_VertPos);
-    // vec3 lightVector = vec3(v_VertPos) - u_lightPos;
     float r = length(lightVector);
     /* Green and Red light */
-    if (r < 1.0) {
-      gl_FragColor = vec4(1,0,0,1);
-    } else if (r < 2.0) {
-      gl_FragColor = vec4(0,1,0,1);
-    }
+    // if (r < 1.0) {
+    //   gl_FragColor = vec4(1,0,0,1);
+    // } else if (r < 2.0) {
+    //   gl_FragColor = vec4(0,1,0,1);
+    // }
 
     /* Light fall off visualization */
     // gl_FragColor = vec4(vec3(gl_FragColor) / (r*r), 1);
 
     /* N dot L */
-    // vec3 L = normalize(lightVector);
-    // vec3 N = normalize(v_Normal);
-    // float nDotL = max(dot(N, L), 0.0);
+    vec3 L = normalize(lightVector);
+    vec3 N = normalize(v_Normal);
+    float nDotL = max(dot(N, L), 0.0);
     // gl_FragColor = gl_FragColor * nDotL;
     // gl_FragColor.a = 1.0;
 
     /* Reflection */
-    // vec3 R = reflect(-L, N);
+    vec3 R = reflect(-L, N);
 
     /* Eye */
-    // vec3 E = normalize(u_cameraPos - vec3(v_VertPos));
+    vec3 E = normalize(u_cameraPos - vec3(v_VertPos));
 
     /* Specular */
-    // float specular = pow(max(dot(E,R), 0.0), 10.0);
-    // vec3 diffuse = vec3(gl_FragColor) * nDotL;
-    // vec3 ambient = vec3(gl_FragColor) * 0.3;
-    // gl_FragColor = vec4(diffuse + ambient, 1.0);
+    float specular = pow(max(dot(E,R), 0.0), 64.0) * 0.8;
+    
+    vec3 diffuse = vec3(1.0, 1.0, 0.9) * vec3(gl_FragColor) * nDotL * 0.7;
+    vec3 ambient = vec3(gl_FragColor) * 0.2;
+    if (u_lightOn) {
+        // Only sphere gets specular
+        if (u_whichTexture == 2) {
+            gl_FragColor = vec4(specular + diffuse + ambient, 1.0);
+        } else {
+            gl_FragColor = vec4(diffuse + ambient, 1.0);
+        }
+    }
 }`
 
 // Global variables
@@ -104,6 +113,8 @@ let u_Sampler1;
 let u_Sampler2;
 let u_whichTexture;
 let u_lightPos;
+let u_cameraPos;
+let u_lightOn;
 let g_globalAngle = 0;
 
 function setupWebGL() {
@@ -198,11 +209,18 @@ function connectVariablesToGLSL() {
     }
 
     // Get the storage location of u_cameraPos
-    // u_cameraPos = gl.getUniformLocation(gl.program, 'u_cameraPos');
-    // if (!u_cameraPos) {
-    //     console.log('Failed to get the storage location of u_cameraPos');
-    //     return;
-    // }
+    u_cameraPos = gl.getUniformLocation(gl.program, 'u_cameraPos');
+    if (!u_cameraPos) {
+        console.log('Failed to get the storage location of u_cameraPos');
+        return;
+    }
+
+    // Get the storage location of u_lightOn
+    u_lightOn = gl.getUniformLocation(gl.program, 'u_lightOn');
+    if (!u_lightOn) {
+        console.log('Failed to get the storage location of u_lightOn');
+        return;
+    }
 
     // Get the storage location of u_Sampler0
     u_Sampler0 = gl.getUniformLocation(gl.program, 'u_Sampler0');
@@ -236,6 +254,10 @@ function addActionsForHtmlUI() {
     // Button events
     document.getElementById('normalOn').onclick = function () { g_normalOn = true; };
     document.getElementById('normalOff').onclick = function () { g_normalOn = false; };
+
+    // Light On
+    document.getElementById('lightOn').onclick = function() { g_lightOn = true; };
+    document.getElementById('lightOff').onclick = function() { g_lightOn = false; };
 
     // Light XYZ
     document.getElementById('lightSlideX').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) { g_lightPos[0] = this.value / 100; renderLight(); } });
@@ -308,7 +330,7 @@ function drawSurrounding() {
     sky.color = [0.8, 0.8, 0.8, 1];
     sky.textureNum = -2;
     if (g_normalOn) sky.textureNum = -3;
-    sky.matrix.scale(5, 5, 5);
+    sky.matrix.scale(-5, -5, -5); // Because normals in negative
     sky.matrix.translate(-0.5, -0.5, -0.5);
     sky.render();
 
@@ -322,8 +344,9 @@ function drawSurrounding() {
     floor.render();
 }
 
-// Light variable
+// Light variables
 let g_lightPos = [0, 1, -2];
+let g_lightOn = true;
 
 function renderLight() {
     var light = new Cube();
@@ -332,7 +355,7 @@ function renderLight() {
     light.matrix.scale(-.1, -.1, -.1);
     light.matrix.translate(-0.5, -0.5, -0.5);
     // Animate the light
-    g_lightPos[0] = Math.cos(g_seconds);
+    g_lightPos[0] = 2.3 * Math.cos(g_seconds);
     light.render();
 }
 
@@ -550,7 +573,10 @@ function renderEverything() {
     gl.uniform3f(u_lightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
 
     // Pass the camera position to GLSL
-    // gl.uniform3f(u_cameraPos, g_Camera.eye.x, g_Camera.eye.y,  g_Camera.eye.z);
+    gl.uniform3f(u_cameraPos, g_Camera.eye.elements[0], g_Camera.eye.elements[1],  g_Camera.eye.elements[2]);
+
+    // Pass the light status
+    gl.uniform1i(u_lightOn, g_lightOn);
 
     // Clear canvas
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
