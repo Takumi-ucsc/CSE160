@@ -27,6 +27,7 @@ const FSHADER_SOURCE = `
   uniform sampler2D u_Sampler0;
   uniform sampler2D u_Sampler1;
   uniform sampler2D u_Sampler2;
+  uniform sampler2D u_Sampler3;
   uniform int u_whichTexture;
   uniform vec3 u_lightPos;
   uniform vec3 u_cameraPos;
@@ -52,6 +53,8 @@ const FSHADER_SOURCE = `
     // Use texture2
     } else if (u_whichTexture == 2) {
         gl_FragColor = texture2D(u_Sampler2, v_UV);
+    } else if (u_whichTexture == 3) {
+        gl_FragColor = texture2D(u_Sampler3, v_UV);
     // Error
     } else {
         gl_FragColor = vec4(1.0, .2, .2, 1.0);
@@ -112,6 +115,7 @@ let u_GlobalRotateMatrix;
 let u_Sampler0;
 let u_Sampler1;
 let u_Sampler2;
+let u_Sampler3;
 let u_whichTexture;
 let u_lightPos;
 let u_cameraPos;
@@ -247,6 +251,12 @@ function connectVariablesToGLSL() {
     u_Sampler2 = gl.getUniformLocation(gl.program, 'u_Sampler2');
     if (!u_Sampler2) {
         console.log('Failed to get the storage location of u_Sampler2');
+        return false;
+    }
+
+    u_Sampler3 = gl.getUniformLocation(gl.program, 'u_Sampler3');
+    if (!u_Sampler3) {
+        console.log('Failed to get the storage location of u_Sampler3');
         return false;
     }
 
@@ -486,6 +496,17 @@ function renderSphere() {
     sphere.render();
 }
 
+function renderCube() {
+    var cube = new Cube();
+
+    cube.color = [0.5, 0.5, 0.5, 1.0];
+    cube.textureNum = 3;
+    if (g_normalOn) cube.textureNum = -3;
+    cube.matrix.translate(1, -0.8, 0.6);
+    cube.matrix.scale(-.5, -.5, -.5);
+    cube.render();
+}
+
 // Camera variables
 var g_Camera = new Camera(canvas);
 
@@ -615,6 +636,8 @@ function renderEverything() {
 
     renderSphere();
 
+    renderCube();
+
     // renderMap();
 }
 
@@ -658,9 +681,23 @@ function initTextures() {
     // Tell the browser to load an image
     image2.src = './dirt.jpeg';
 
+    // Create the image object
+    var image3 = new Image();
+    if (!image3) {
+        console.log('Failed to create the image object');
+        return false;
+    }
+
+    // Register the event handler to be called on loading an image
+    image3.onload = function () { sendTextureToGLSL3(image3); };
+
+    // Tell the browser to load an image
+    image3.src = './block.png';
+
     return true;
 }
 
+// Sky
 function sendTextureToGLSL0(image) {
     // Create a texture object
     var texture = gl.createTexture();
@@ -685,6 +722,7 @@ function sendTextureToGLSL0(image) {
     gl.uniform1i(u_Sampler0, 0);
 }
 
+// Grass
 function sendTextureToGLSL1(image) {
     // Create a texture object
     var texture = gl.createTexture();
@@ -709,6 +747,7 @@ function sendTextureToGLSL1(image) {
     gl.uniform1i(u_Sampler1, 1);
 }
 
+// Dirt
 function sendTextureToGLSL2(image) {
     // Create a texture object
     var texture = gl.createTexture();
@@ -733,6 +772,33 @@ function sendTextureToGLSL2(image) {
 
     // Set the texture unit 2 to the sampler
     gl.uniform1i(u_Sampler2, 2);
+}
+
+// Block
+function sendTextureToGLSL3(image) {
+    // Create a texture object
+    var texture = gl.createTexture();
+    if (!texture) {
+        console.log('Failed to create the texture object');
+        return false;
+    }
+
+    // Flip the image's y axis
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+    // Enable texture unit0
+    gl.activeTexture(gl.TEXTURE3);
+    // Bind the texture object to the target
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    // Set the texture parameters
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    // Set the texture image
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+
+    // Set the texture unit 3 to the sampler
+    gl.uniform1i(u_Sampler3, 3);
 }
 
 // Set the text of a HTML element
