@@ -11,10 +11,12 @@ const VSHADER_SOURCE = `
   uniform mat4 u_GlobalRotateMatrix;
   uniform mat4 u_ViewMatrix;
   uniform mat4 u_ProjectionMatrix;
+//   uniform mat4 u_NormalMatrix;
   void main() {
     gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_GlobalRotateMatrix * u_ModelMatrix * a_Position;
     v_UV = a_UV;
     v_Normal = a_Normal;
+    // v_Normal = normalize(vec3(u_NormalMatrix * vec4(a_Normal, 1)));
     v_VertPos = u_ModelMatrix * a_Position;
 }`
 
@@ -112,6 +114,7 @@ let u_ModelMatrix;
 let u_ProjectionMatrix;
 let u_ViewMatrix;
 let u_GlobalRotateMatrix;
+// let u_NormalMatrix;
 let u_Sampler0;
 let u_Sampler1;
 let u_Sampler2;
@@ -195,6 +198,13 @@ function connectVariablesToGLSL() {
 
     // Get the storage location of u_ProjectionMatrix
     u_ProjectionMatrix = gl.getUniformLocation(gl.program, 'u_ProjectionMatrix');
+    if (!u_ProjectionMatrix) {
+        console.log('Failed to get the storage location of u_ProjectionMatrix');
+        return;
+    }
+
+    // Get the storage location of u_ProjectionMatrix
+    u_NormalMatrix = gl.getUniformLocation(gl.program, 'u_NormalMatrix');
     if (!u_ProjectionMatrix) {
         console.log('Failed to get the storage location of u_ProjectionMatrix');
         return;
@@ -395,12 +405,12 @@ function renderPenguin() {
     // Create a root matrix for the penguin
     let penguinMatrix = new Matrix4();
     penguinMatrix.scale(1, 1, 1); // Scale up the penguin
-    penguinMatrix.translate(0.25, -0.5, 0.0); // Move the penguin up
-    penguinMatrix.rotate(180, 0.0, 1.0, 0.0); // Rotate the penguin
+    penguinMatrix.translate(-0.25, -1, -0.5); // Move the penguin up
 
     // Body
     let body = new Cube();
     body.color = [0.05, 0.05, 0.05, 0.8]; // Black body
+    if (g_normalOn) body.textureNum = -3;
     body.matrix = new Matrix4(penguinMatrix); // Base Matrix
     body.matrix.translate(0.0, -0.2, 0.0);
     body.matrix.scale(0.5, 0.7, 0.5);
@@ -415,14 +425,16 @@ function renderPenguin() {
     // Stomach (white part)
     let stomach = new Cube();
     stomach.color = [1.0, 1.0, 1.0, 1.0]; // White
+    if (g_normalOn) stomach.textureNum = -3;
     stomach.matrix = bodyMat;
-    stomach.matrix.translate(0.05, 0.05, -0.05);
+    stomach.matrix.translate(0.05, 0.05, 1.0);
     stomach.matrix.scale(0.9, 0.9, 0.1);
     stomach.render();
 
     // Head
     let head = new Cube();
     head.color = [0.05, 0.05, 0.05, 0.8]; // Black
+    if (g_normalOn) head.textureNum = -3;
     head.matrix = bodyMat2;
     head.matrix.translate(0.1, 0.65, 0.1);
     head.matrix.scale(0.8, 0.8, 0.8);
@@ -434,44 +446,50 @@ function renderPenguin() {
     // Beak
     let beak = new Cube();
     beak.color = [1.0, 0.65, 0.0, 1.0]; // Orange
+    if (g_normalOn) beak.textureNum = -3;
     beak.matrix = headMat1;
-    beak.matrix.translate(0.4, 0.5, -0.3);
+    beak.matrix.translate(0.4, 0.5, 0.8);
     beak.matrix.scale(0.25, 0.25, 0.5);
     beak.render();
 
     // Eyes
     let eye1 = new Cube();
     eye1.color = [1.0, 1.0, 1.0, 1.0]; // White
+    if (g_normalOn) eye1.textureNum = -3;
     eye1.matrix = headMat2;
-    eye1.matrix.translate(0.2, 0.7, -0.05);
+    eye1.matrix.translate(0.2, 0.7, 0.95);
     eye1.matrix.scale(0.1, 0.1, 0.1);
     eye1.render();
 
     let eye2 = new Cube();
     eye2.color = [1.0, 1.0, 1.0, 1.0]; // White
+    if (g_normalOn) eye2.textureNum = -3;
     eye2.matrix = headMat3;
-    eye2.matrix.translate(0.75, 0.7, -0.05);
+    eye2.matrix.translate(0.75, 0.7, 0.95);
     eye2.matrix.scale(0.1, 0.1, 0.1);
     eye2.render();
 
     // Feet
     let rightFoot = new Cube();
     rightFoot.color = [1.0, 0.65, 0.0, 1.0]; // Orange
+    if (g_normalOn) rightFoot.textureNum = -3;
     rightFoot.matrix = bodyMat3;
-    rightFoot.matrix.translate(0.2, -0.1, -0.15);
+    rightFoot.matrix.translate(0.2, -0.1, 0.2);
     rightFoot.matrix.scale(0.3, 0.1, 1.0);
     rightFoot.render();
 
     let leftFoot = new Cube();
     leftFoot.color = [1.0, 0.65, 0.0, 1.0]; // Orange 
+    if (g_normalOn) leftFoot.textureNum = -3;
     leftFoot.matrix = bodyMat4;
-    leftFoot.matrix.translate(0.55, -0.1, -0.15);
+    leftFoot.matrix.translate(0.55, -0.1, 0.2);
     leftFoot.matrix.scale(0.3, 0.1, 1.0);
     leftFoot.render();
 
     // Wings
     let wingRight = new Cube();
     wingRight.color = [0.05, 0.05, 0.05, 0.8]; // Black
+    if (g_normalOn) wingRight.textureNum = -3;
     wingRight.matrix = bodyMat5;
     wingRight.matrix.translate(1, 0.35, 0.3);
     wingRight.matrix.scale(0.15, 0.65, 0.4);
@@ -479,6 +497,7 @@ function renderPenguin() {
 
     let wingLeft = new Cube();
     wingLeft.color = [0.05, 0.05, 0.05, 0.8]; // Black
+    if (g_normalOn) wingLeft.textureNum = -3;
     wingLeft.matrix = bodyMat6;
     wingLeft.matrix.translate(-0.1, 0.35, 0.3);
     wingLeft.matrix.scale(0.15, 0.65, 0.4);
@@ -502,8 +521,8 @@ function renderCube() {
     cube.color = [0.5, 0.5, 0.5, 1.0];
     cube.textureNum = 3;
     if (g_normalOn) cube.textureNum = -3;
-    cube.matrix.translate(1, -0.8, 0.6);
-    cube.matrix.scale(-.5, -.5, -.5);
+    cube.matrix.translate(.5, -1.3, 0);
+    cube.matrix.scale(.5, .5, .5);
     cube.render();
 }
 
