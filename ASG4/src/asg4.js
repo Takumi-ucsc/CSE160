@@ -114,7 +114,7 @@ let u_ModelMatrix;
 let u_ProjectionMatrix;
 let u_ViewMatrix;
 let u_GlobalRotateMatrix;
-// let u_NormalMatrix;
+let u_NormalMatrix;
 let u_Sampler0;
 let u_Sampler1;
 let u_Sampler2;
@@ -125,6 +125,9 @@ let u_cameraPos;
 let u_lightOn;
 let u_lightColor;
 let g_globalAngle = 0;
+let g_leftWingAngle = 0;
+let g_rightWingAngle = 0;
+let g_animationEnabled = false; // Animation enabled flag
 
 function setupWebGL() {
     // Retrieve <canvas> element
@@ -284,6 +287,25 @@ function addActionsForHtmlUI() {
     document.getElementById('normalOn').onclick = function () { g_normalOn = true; };
     document.getElementById('normalOff').onclick = function () { g_normalOn = false; };
 
+    // Animation toggle button events
+    // Animation on
+    document.getElementById('animate-on').addEventListener('click', function () {
+        g_animationEnabled = true;
+        // Update the slider value when animate-on is clicked
+        document.getElementById('leftWingSlider').value = g_leftWingAngle;
+        document.getElementById('rightWingSlider').value = g_rightWingAngle;
+    });
+
+    // Animation off
+    document.getElementById('animate-off').addEventListener('click', function () {
+        g_animationEnabled = false;
+        g_leftWingAngle = 0;
+        g_rightWingAngle = 0;
+        // Update the slider value when animate-off is clicked
+        document.getElementById('leftWingSlider').value = g_leftWingAngle;
+        document.getElementById('rightWingSlider').value = g_rightWingAngle;
+    });
+
     // Light On
     document.getElementById('lightOn').onclick = function () { g_lightOn = true; };
     document.getElementById('lightOff').onclick = function () { g_lightOn = false; };
@@ -302,6 +324,22 @@ function addActionsForHtmlUI() {
     });
     document.getElementById('lightB').addEventListener('input', function () {
         g_lightColor[2] = this.value / 255;
+    });
+
+    // Left Wing Slider Event
+    document.getElementById('leftWingSlider').addEventListener('input', function () {
+        g_leftWingAngle = this.value;
+        g_animationEnabled = false; // Disable animation when the slider is used
+        document.getElementById('animate-off').checked = true; // Update the radio button state
+        renderEverything();
+    });
+
+    // Right Wing Slider Event
+    document.getElementById('rightWingSlider').addEventListener('input', function () {
+        g_rightWingAngle = this.value;
+        g_animationEnabled = false; // Disable animation when the slider is used
+        document.getElementById('animate-off').checked = true; // Update the radio button state
+        renderEverything();
     });
 
     // X-axis Angle Slider Event
@@ -354,6 +392,11 @@ function tick() {
     }
 
     g_seconds = performance.now() / 1000.0 - g_startTime;
+
+    // Animation
+    if (g_animationEnabled) {
+        updateAnimationAngles();
+    }
 
     // Draw everything
     renderEverything();
@@ -492,6 +535,10 @@ function renderPenguin() {
     if (g_normalOn) wingRight.textureNum = -3;
     wingRight.matrix = bodyMat5;
     wingRight.matrix.translate(1, 0.35, 0.3);
+    wingRight.matrix.rotate(0, 0, 1, 0);
+    wingRight.matrix.translate(0, 0.5, 0);
+    wingRight.matrix.rotate(g_rightWingAngle, 0, 0, 1);
+    wingRight.matrix.translate(0, -0.5, 0);
     wingRight.matrix.scale(0.15, 0.65, 0.4);
     wingRight.render();
 
@@ -499,9 +546,27 @@ function renderPenguin() {
     wingLeft.color = [0.05, 0.05, 0.05, 0.8]; // Black
     if (g_normalOn) wingLeft.textureNum = -3;
     wingLeft.matrix = bodyMat6;
-    wingLeft.matrix.translate(-0.1, 0.35, 0.3);
+    wingLeft.matrix.translate(-0.15, 0.35, 0.3);
+    wingLeft.matrix.rotate(0, 0, 1, 0);
+    wingLeft.matrix.translate(0.15, 0.5, 0);
+    wingLeft.matrix.rotate(-g_leftWingAngle, 0, 0, 1);
+    wingLeft.matrix.translate(-0.15, -0.5, 0);
     wingLeft.matrix.scale(0.15, 0.65, 0.4);
     wingLeft.render();
+}
+
+// Animation
+function updateAnimationAngles() {
+    if (g_animationEnabled) {
+        // Update wing angles
+        if (Math.sin(g_seconds * 10) > 0) {
+            g_leftWingAngle = Math.sin(g_seconds * 10) * 30;
+            g_rightWingAngle = g_leftWingAngle;
+        } else {
+            g_leftWingAngle = 0;
+            g_rightWingAngle = 0;
+        }
+    }
 }
 
 function renderSphere() {
