@@ -37,8 +37,6 @@ const FSHADER_SOURCE = `
   uniform bool u_lightOn;
   uniform vec3 u_lightColor;
   /* Spot Light */
-  uniform vec3 u_spotLightPos;
-  uniform vec3 u_spotLightColor;
   uniform vec3 u_spotLightDirection;
   uniform float u_spotLightCutOff;
   uniform bool u_spotLightOn;
@@ -105,15 +103,19 @@ const FSHADER_SOURCE = `
         } else {
             gl_FragColor = vec4(diffuse + ambient, 1.0);
         }
-    }
 
-    if (u_spotLightOn) {
-        vec3 spotLightDirection = normalize(u_spotLightPos - vec3(v_VertPos));
-        float spotLightAngleCos = dot(spotLightDirection, -u_spotLightDirection);
-
-        float spotLightIntensity = smoothstep(u_spotLightCutOff, u_spotLightCutOff + 0.05, spotLightAngleCos);
-        vec3 spotLightDiffuse = u_spotLightColor * vec3(gl_FragColor) * nDotL * spotLightIntensity * 0.5;
-        gl_FragColor = vec4(gl_FragColor.rgb * (ambient + diffuse + specular + spotLightDiffuse), gl_FragColor.a);  
+        if (u_spotLightOn){
+            vec3 spotDirection = normalize(u_spotLightDirection);
+            float spotLightIntensity = dot(L, spotDirection);
+  
+            if (spotLightIntensity > u_spotLightCutOff) {
+              float spotLightFactor = smoothstep(u_spotLightCutOff, 1.0, spotLightIntensity);
+              gl_FragColor *= spotLightFactor;
+            }
+            else{
+              gl_FragColor *= 0.9;
+            }
+          }
     }
 }`
 
@@ -140,15 +142,11 @@ let u_cameraPos;
 let u_lightOn;
 let u_lightColor;
 // Spot Light
-let u_spotLightPos;
-let u_spotLightColor;
 let u_spotLightDirection;
 let u_spotLightCutOff;
 let u_spotLightOn;
 
-let g_spotLightPos = [0, 1, 0];
-let g_spotLightColor = [1, 1, 1];
-let g_spotLightDirection = [0, -1, -1.0];
+let g_spotLightDirection = [0, 1, 0];
 let g_spotLightCutOff = Math.cos(Math.PI / 12); 
 let g_spotLightOn = false;
 
@@ -273,20 +271,6 @@ function connectVariablesToGLSL() {
     u_lightColor = gl.getUniformLocation(gl.program, 'u_lightColor');
     if (!u_lightColor) {
         console.log('Failed to get the storage location of u_lightColor');
-        return;
-    }
-
-    // Get the storage location of u_spotLightPos
-    u_spotLightPos = gl.getUniformLocation(gl.program, 'u_spotLightPos');
-    if (!u_spotLightPos) {
-        console.log('Failed to get the storage location of u_spotLightPos');
-        return;
-    }
-
-    // Get the storage location of u_spotLightColor
-    u_spotLightColor = gl.getUniformLocation(gl.program, 'u_spotLightColor');
-    if (!u_spotLightColor) {
-        console.log('Failed to get the storage location of u_spotLightColor');
         return;
     }
 
@@ -514,8 +498,8 @@ function renderLight() {
 function renderPenguin() {
     // Create a root matrix for the penguin
     let penguinMatrix = new Matrix4();
-    penguinMatrix.scale(1, 1, 1); // Scale up the penguin
-    penguinMatrix.translate(-0.25, -1, -0.5); // Move the penguin up
+    penguinMatrix.scale(2, 2, 2); // Scale up the penguin
+    penguinMatrix.translate(-0.25, -1, -1.5); // Move the penguin up
 
     // Body
     let body = new Cube();
@@ -768,8 +752,6 @@ function renderEverything() {
     gl.uniform3f(u_lightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
 
     // Pass the spotlight
-    gl.uniform3fv(u_spotLightPos, g_spotLightPos);
-    gl.uniform3fv(u_spotLightColor, g_spotLightColor);
     gl.uniform3fv(u_spotLightDirection, g_spotLightDirection);
     gl.uniform1f(u_spotLightCutOff, g_spotLightCutOff);
     gl.uniform1i(u_spotLightOn, g_spotLightOn);
