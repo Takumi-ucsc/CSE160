@@ -4,7 +4,7 @@ class Cube {
         this.type = 'cube';
         this.color = [1.0, 1.0, 1.0, 1.0]; // Default color: white
         this.matrix = new Matrix4(); // Default: identity matrix
-        // this.normalMatrix = new Matrix4();
+        this.normalMatrix = new Matrix4();
         this.textureNum = -2; // No texture
     }
 
@@ -19,6 +19,9 @@ class Cube {
 
         // Pass the matrix to u_ModelMatrix attribute
         gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
+
+        // Pass the normal matrix
+        gl.uniformMatrix4fv(u_NormalMatrix, false, this.normalMatrix.elements);
 
         // Draw each face of the cube
         // Front

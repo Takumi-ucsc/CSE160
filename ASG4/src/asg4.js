@@ -11,12 +11,12 @@ const VSHADER_SOURCE = `
   uniform mat4 u_GlobalRotateMatrix;
   uniform mat4 u_ViewMatrix;
   uniform mat4 u_ProjectionMatrix;
-//   uniform mat4 u_NormalMatrix;
+  uniform mat4 u_NormalMatrix;
   void main() {
     gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_GlobalRotateMatrix * u_ModelMatrix * a_Position;
     v_UV = a_UV;
-    v_Normal = a_Normal;
-    // v_Normal = normalize(vec3(u_NormalMatrix * vec4(a_Normal, 1)));
+    // v_Normal = a_Normal;
+    v_Normal = normalize(vec3(u_NormalMatrix * vec4(a_Normal, 1)));
     v_VertPos = u_ModelMatrix * a_Position;
 }`
 
@@ -36,6 +36,12 @@ const FSHADER_SOURCE = `
   varying vec4 v_VertPos;
   uniform bool u_lightOn;
   uniform vec3 u_lightColor;
+  /* Spot Light */
+  uniform vec3 u_spotLightPos;
+  uniform vec3 u_spotLightColor;
+  uniform vec3 u_spotLightDirection;
+  uniform float u_spotLightCutOff;
+  uniform bool u_spotLightOn;
   void main() {
     // Use Normal
     if (u_whichTexture == -3) {
@@ -100,6 +106,15 @@ const FSHADER_SOURCE = `
             gl_FragColor = vec4(diffuse + ambient, 1.0);
         }
     }
+
+    if (u_spotLightOn) {
+        vec3 spotLightDirection = normalize(u_spotLightPos - vec3(v_VertPos));
+        float spotLightAngleCos = dot(spotLightDirection, -u_spotLightDirection);
+
+        float spotLightIntensity = smoothstep(u_spotLightCutOff, u_spotLightCutOff + 0.05, spotLightAngleCos);
+        vec3 spotLightDiffuse = u_spotLightColor * vec3(gl_FragColor) * nDotL * spotLightIntensity * 0.5;
+        gl_FragColor = vec4(gl_FragColor.rgb * (ambient + diffuse + specular + spotLightDiffuse), gl_FragColor.a);  
+    }
 }`
 
 // Global variables
@@ -124,6 +139,19 @@ let u_lightPos;
 let u_cameraPos;
 let u_lightOn;
 let u_lightColor;
+// Spot Light
+let u_spotLightPos;
+let u_spotLightColor;
+let u_spotLightDirection;
+let u_spotLightCutOff;
+let u_spotLightOn;
+
+let g_spotLightPos = [0, 1, 0];
+let g_spotLightColor = [1, 1, 1];
+let g_spotLightDirection = [0, -1, -1.0];
+let g_spotLightCutOff = Math.cos(Math.PI / 12); 
+let g_spotLightOn = false;
+
 let g_globalAngle = 0;
 let g_leftWingAngle = 0;
 let g_rightWingAngle = 0;
@@ -248,6 +276,41 @@ function connectVariablesToGLSL() {
         return;
     }
 
+    // Get the storage location of u_spotLightPos
+    u_spotLightPos = gl.getUniformLocation(gl.program, 'u_spotLightPos');
+    if (!u_spotLightPos) {
+        console.log('Failed to get the storage location of u_spotLightPos');
+        return;
+    }
+
+    // Get the storage location of u_spotLightColor
+    u_spotLightColor = gl.getUniformLocation(gl.program, 'u_spotLightColor');
+    if (!u_spotLightColor) {
+        console.log('Failed to get the storage location of u_spotLightColor');
+        return;
+    }
+
+    // Get the storage location of u_spotLightDirection;
+    u_spotLightDirection = gl.getUniformLocation(gl.program, 'u_spotLightDirection');
+    if (!u_spotLightDirection) {
+        console.log('Failed to get the storage location of u_spotLightDirection');
+        return;
+    }
+
+    // Get the storage location of u_spotLightCutOff
+    u_spotLightCutOff = gl.getUniformLocation(gl.program, 'u_spotLightCutOff');
+    if (!u_spotLightCutOff) {
+        console.log('Failed to get the storage location of u_spotLightCutOff');
+        return;
+    }
+
+    // Get the storage location of u_spotLightOn
+    u_spotLightOn = gl.getUniformLocation(gl.program, 'u_spotLightOn');
+    if (!u_spotLightOn) {
+        console.log('Failed to get the storage location of u_spotLightOn');
+        return;
+    }
+
     // Get the storage location of u_Sampler0
     u_Sampler0 = gl.getUniformLocation(gl.program, 'u_Sampler0');
     if (!u_Sampler0) {
@@ -306,9 +369,13 @@ function addActionsForHtmlUI() {
         document.getElementById('rightWingSlider').value = g_rightWingAngle;
     });
 
-    // Light On
+    // Light On/Off
     document.getElementById('lightOn').onclick = function () { g_lightOn = true; };
     document.getElementById('lightOff').onclick = function () { g_lightOn = false; };
+
+    // Spotlight On/Off
+    document.getElementById('spotLightOn').onclick = function () { g_spotLightOn = true; };
+    document.getElementById('spotLightOff').onclick = function () { g_spotLightOn = false; };
 
     // Light XYZ
     document.getElementById('lightSlideX').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) { g_lightPos[0] = this.value / 100; renderLight(); } });
@@ -540,6 +607,7 @@ function renderPenguin() {
     wingRight.matrix.rotate(g_rightWingAngle, 0, 0, 1);
     wingRight.matrix.translate(0, -0.5, 0);
     wingRight.matrix.scale(0.15, 0.65, 0.4);
+    wingRight.normalMatrix.setInverseOf(wingRight.matrix).transpose();
     wingRight.render();
 
     let wingLeft = new Cube();
@@ -552,6 +620,7 @@ function renderPenguin() {
     wingLeft.matrix.rotate(-g_leftWingAngle, 0, 0, 1);
     wingLeft.matrix.translate(-0.15, -0.5, 0);
     wingLeft.matrix.scale(0.15, 0.65, 0.4);
+    wingLeft.normalMatrix.setInverseOf(wingLeft.matrix).transpose();
     wingLeft.render();
 }
 
@@ -697,6 +766,13 @@ function renderEverything() {
 
     // Pass the light position
     gl.uniform3f(u_lightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
+
+    // Pass the spotlight
+    gl.uniform3fv(u_spotLightPos, g_spotLightPos);
+    gl.uniform3fv(u_spotLightColor, g_spotLightColor);
+    gl.uniform3fv(u_spotLightDirection, g_spotLightDirection);
+    gl.uniform1f(u_spotLightCutOff, g_spotLightCutOff);
+    gl.uniform1i(u_spotLightOn, g_spotLightOn);
 
     // Pass the camera position to GLSL
     gl.uniform3f(u_cameraPos, g_Camera.eye.elements[0], g_Camera.eye.elements[1], g_Camera.eye.elements[2]);
